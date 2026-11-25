@@ -1,0 +1,1 @@
+vless://e72e8b72-2362-4f86-ad48-ddac27b2bcba@your-app.up.railway.app:443?encryption=none&security=tls&sni=your-app.up.railway.app&fp=chrome&type=ws&host=your-app.up.railway.app&path=%2Fvless-ws#Railway-VLESS
