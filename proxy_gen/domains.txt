@@ -1,2 +1,1 @@
-# domains.txt - هر دامنه یا IP در یک خط
 dockerfile-production-b82427c4.up.railway.app
