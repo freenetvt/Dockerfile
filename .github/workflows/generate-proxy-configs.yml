@@ -1,0 +1,44 @@
+name: Generate VLESS Config
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "generate_config.py"
+      - ".github/workflows/generate-vless.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate vless_config.txt
+        env:
+          VLESS_UUID: "e72e8b72-2362-4f86-ad48-ddac27b2bcba"
+          RAILWAY_DOMAIN: "your-app.up.railway.app"
+          VLESS_PORT: "443"
+          WS_PATH: "/vless-ws"
+          CONFIG_REMARK: "Railway-VLESS"
+        run: python generate_config.py
+
+      - name: Commit and push vless_config.txt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vless_config.txt
+          if git diff --staged --quiet; then
+            echo "No changes in vless_config.txt"
+          else
+            git commit -m "Update vless_config.txt"
+            git push
+          fi
