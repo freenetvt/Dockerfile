@@ -134,7 +134,10 @@ def build_link(
 
 
 links: list[str] = []
+vless_links: list[str] = []
 counter = 1
+vless_counter = 1
+
 for domain in domains:
     target = forced_address if forced_address else domain
     host = forced_host if forced_host else domain
@@ -145,16 +148,25 @@ for domain in domains:
         links.append(build_link(proto, target, host, sni, uid, remark))
         counter += 1
 
+        if "vless" in protocols:
+            vless_remark = f"{remark_prefix}-VLESS-{vless_counter}"
+            vless_links.append(
+                build_link("vless", target, host, sni, uid, vless_remark)
+            )
+            vless_counter += 1
+
 plain_text = "\n".join(links) + ("\n" if links else "")
 base64_text = (
     base64.b64encode(plain_text.strip().encode("utf-8")).decode("utf-8") + "\n"
     if links
     else ""
 )
+vless_text = "\n".join(vless_links) + ("\n" if vless_links else "")
 
 (BASE_DIR / "configs.txt").write_text(plain_text, encoding="utf-8")
 (BASE_DIR / "sub_base64.txt").write_text(base64_text, encoding="utf-8")
+(BASE_DIR / "vless.txt").write_text(vless_text, encoding="utf-8")
 
 print(
-    f"Saved to {BASE_DIR} | Generated {len(links)} configs | domains={len(domains)} | uuids={len(uuids)}"
+    f"Saved to {BASE_DIR} | Generated {len(links)} configs | vless={len(vless_links)} | domains={len(domains)} | uuids={len(uuids)}"
 )
