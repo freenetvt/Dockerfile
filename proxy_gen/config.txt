@@ -1,12 +1,9 @@
-# تنظیمات اصلی کانفیگ (بدون نیاز به تغییر کد)
 PORT=443
 PATH=/vless-ws
 PROTOCOLS=vless,vmess,trojan
 REMARK_PREFIX=Railway
-
-# اختیاری: اگر آدرس اتصال (IP یا سابدامین) با Host/SNI فرق دارد
 # ADDRESS=
-# HOST=
+# HOST=dockerfile-production-b82427c4.up.railway.app
 # SNI=
 # SECURITY=tls
 # FP=chrome
