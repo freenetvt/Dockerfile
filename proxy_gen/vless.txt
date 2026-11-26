@@ -1,0 +1,2 @@
+vless://0cb18223-88b2-4e9f-a223-9cb4d9fe3a9a@dockerfile-production-b82427c4.up.railway.app:443?encryption=none&security=tls&sni=dockerfile-production-b82427c4.up.railway.app&fp=chrome&type=ws&host=dockerfile-production-b82427c4.up.railway.app&path=%2Fvless-ws#Railway-VLESS-1
+vless://73fd1322-87a8-4676-b423-50cfac840f47@dockerfile-production-b82427c4.up.railway.app:443?encryption=none&security=tls&sni=dockerfile-production-b82427c4.up.railway.app&fp=chrome&type=ws&host=dockerfile-production-b82427c4.up.railway.app&path=%2Fvless-ws#Railway-VLESS-2
