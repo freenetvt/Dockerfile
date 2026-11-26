@@ -1,44 +1,96 @@
 import base64
+import json
 import os
-import uuid
 from urllib.parse import quote
 
 DOMAIN = os.getenv("RAILWAY_DOMAIN", "your-app.up.railway.app").strip()
-PORT = os.getenv("VLESS_PORT", "443").strip()
+PORT = int(os.getenv("PROXY_PORT", "443").strip())
 PATH = os.getenv("WS_PATH", "/vless-ws").strip()
-REMARK_PREFIX = os.getenv("CONFIG_REMARK_PREFIX", "Railway-VLESS").strip()
+REMARK_PREFIX = os.getenv("CONFIG_REMARK_PREFIX", "Railway").strip()
+PROTOCOLS = [
+    p.strip().lower()
+    for p in os.getenv("PROTOCOLS", "vless,vmess,trojan").split(",")
+    if p.strip()
+]
 
-# می‌توانید UUIDهای دلخواه را با کاما در VLESS_UUIDS بدهید یا تعداد را در CONFIG_COUNT مشخص کنید
-RAW_UUIDS = os.getenv("VLESS_UUIDS", "e72e8b72-2362-4f86-ad48-ddac27b2bcba").strip()
-CONFIG_COUNT = int(os.getenv("CONFIG_COUNT", "1"))
+DEFAULT_UUIDS = [
+    "0cb18223-88b2-4e9f-a223-9cb4d9fe3a9a",
+    "73fd1322-87a8-4676-b423-50cfac840f47",
+    "891f805e-0108-42eb-a238-3a57f457f137",
+    "affdf229-cad3-4463-93aa-de63dac52944",
+    "acfb031e-f33b-4010-a515-27608a864b42",
+    "d84e818a-75bd-4987-aa41-06686c9ddf55",
+    "a91956be-9e4f-4d1f-9036-2c5eebffd668",
+]
+
+RAW_UUIDS = os.getenv("PROXY_UUIDS", "").strip()
+uuids = (
+    [u.strip() for u in RAW_UUIDS.split(",") if u.strip()]
+    if RAW_UUIDS
+    else DEFAULT_UUIDS
+)
 
 if not PATH.startswith("/"):
     PATH = "/" + PATH
 
 encoded_path = quote(PATH, safe="")
 
-uuids = [u.strip() for u in RAW_UUIDS.split(",") if u.strip()]
-while len(uuids) < CONFIG_COUNT:
-    uuids.append(str(uuid.uuid4()))
+
+def build_link(proto: str, uid: str, remark: str) -> str:
+    encoded_remark = quote(remark, safe="")
+    if proto == "vless":
+        return (
+            f"vless://{uid}@{DOMAIN}:{PORT}"
+            f"?encryption=none&security=tls&sni={DOMAIN}&fp=chrome"
+            f"&type=ws&host={DOMAIN}&path={encoded_path}#{encoded_remark}"
+        )
+    if proto == "vmess":
+        vmess_payload = {
+            "v": "2",
+            "ps": remark,
+            "add": DOMAIN,
+            "port": str(PORT),
+            "id": uid,
+            "aid": "0",
+            "scy": "auto",
+            "net": "ws",
+            "type": "none",
+            "host": DOMAIN,
+            "path": PATH,
+            "tls": "tls",
+            "sni": DOMAIN,
+            "fp": "chrome",
+        }
+        encoded_json = base64.b64encode(
+            json.dumps(vmess_payload, separators=(",", ":")).encode("utf-8")
+        ).decode("utf-8")
+        return f"vmess://{encoded_json}"
+    if proto == "trojan":
+        return (
+            f"trojan://{uid}@{DOMAIN}:{PORT}"
+            f"?security=tls&sni={DOMAIN}&fp=chrome"
+            f"&type=ws&host={DOMAIN}&path={encoded_path}#{encoded_remark}"
+        )
+    raise ValueError(f"Unsupported protocol: {proto}")
+
 
 links = []
 for idx, uid in enumerate(uuids, start=1):
-    remark = f"{REMARK_PREFIX}-{idx}"
-    encoded_remark = quote(remark, safe="")
-    link = (
-        f"vless://{uid}@{DOMAIN}:{PORT}"
-        f"?encryption=none&security=tls&sni={DOMAIN}&fp=chrome"
-        f"&type=ws&host={DOMAIN}&path={encoded_path}#{encoded_remark}"
-    )
-    links.append(link)
+    proto = PROTOCOLS[(idx - 1) % len(PROTOCOLS)]
+    remark = f"{REMARK_PREFIX}-{proto.upper()}-{idx}"
+    links.append(build_link(proto, uid, remark))
 
 plain_text = "\n".join(links) + "\n"
-base64_text = base64.b64encode(plain_text.strip().encode("utf-8")).decode("utf-8") + "\n"
+base64_text = (
+    base64.b64encode(plain_text.strip().encode("utf-8")).decode("utf-8") + "\n"
+)
 
-with open("vless_configs.txt", "w", encoding="utf-8") as f_txt:
+with open("configs.txt", "w", encoding="utf-8") as f_txt:
     f_txt.write(plain_text)
 
-with open("vless_base64.txt", "w", encoding="utf-8") as f_b64:
+with open("sub_base64.txt", "w", encoding="utf-8") as f_b64:
     f_b64.write(base64_text)
 
-print(f"Generated {len(links)} VLESS configs -> vless_configs.txt & vless_base64.txt")
+print(
+    f"Generated {len(links)} multi-protocol configs -> configs.txt & sub_base64.txt"
+)
