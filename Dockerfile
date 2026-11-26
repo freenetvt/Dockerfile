@@ -1,6 +1,6 @@
 FROM ghcr.io/mhsanaei/3x-ui:latest
 
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache nginx
 
 COPY xuipanel/nginx.conf /etc/nginx/nginx.conf
 COPY xuipanel/entrypoint.sh /entrypoint.sh
